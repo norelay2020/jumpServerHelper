@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="utf-8">
+    <title>JumpServer 同步辅助</title>
+    <meta name="description" content="particles.js is a lightweight JavaScript library for creating particles.">
+    <meta name="author" content="Vincent Garreau" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" media="screen" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}"/>
+
+</head>
+<body>
+
+<div id="particles-js">
+		<div class="login">
+			<div class="login-top">
+				JumpServerHelper 登录
+			</div>
+            <form id="search-form" action method="post">
+                {% csrf_token %}
+			<div class="login-center clearfix">
+				<div class="login-center-img"><img src="{% static 'img/name.png' %}"/></div>
+				<div class="login-center-input">
+					<input type="text" id="uid" name="uid" value placeholder="请输入您的用户名" onfocus="this.placeholder=''" onblur="this.placeholder='请输入您的用户名'"/>
+					<div class="login-center-input-text">用户名</div>
+				</div>
+			</div>
+			<div class="login-center clearfix">
+				<div class="login-center-img"><img src="{% static 'img/password.png' %}"/></div>
+				<div class="login-center-input">
+					<input type="password" id="psd" name="passwd" value placeholder="请输入您的密码" onfocus="this.placeholder=''" onblur="this.placeholder='请输入您的密码'"/>
+					<div class="login-center-input-text">密码</div>
+                    <span style="position:absolute;right: 5px;top: 5px;z-index:20;">
+                        <img style="width: 20px; height: 20px;cursor: pointer;" src="{% static 'img/eye_close.png' %}" id="eye" onclick="passwd_show()">
+                    </span>
+				</div>
+			</div>
+            <div class="login-center clearfix">
+				<div class="login-center-img"><img src="{% static 'img/msg.png' %}"/></div>
+				<div class="login-center-input" style="width: 160px;">
+					<input type="text" id="verifycode" name="vcode" value placeholder="请输入短信验证码" onfocus="this.placeholder=''" onblur="this.placeholder='请输入您的短信验证码'"/>
+					<div class="login-center-input-text">短信验证码</div>
+				</div>
+                <div class="verifycode-div"><button type="button" class="verifycode-btn"  onclick="invokeSettime(this)">获 取</button></div>
+			</div>
+			<div class="login-button">
+				登 录
+			</div>
+            <div style="text-align:center;margin-top: 15px;"><p style="width: 100%;margin-left: 5px;color: orangered">{{ error_msg }}</p></div>
+            </form>
+		</div>
+		<div class="sk-rotating-plane"></div>
+</div>
+
+<!-- scripts -->
+{#<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />#}
+<script src="{% static 'js/particles.min.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+<script src="{% static 'js/jquery.min.js' %}"></script>
+<script type="text/javascript">
+	function hasClass(elem, cls) {
+	  cls = cls || '';
+	  if (cls.replace(/\s/g, '').length == 0) return false; //当cls没有参数时，返回false
+	  return new RegExp(' ' + cls + ' ').test(' ' + elem.className + ' ');
+	}
+	 
+	function addClass(ele, cls) {
+	  if (!hasClass(ele, cls)) {
+	    ele.className = ele.className == '' ? cls : ele.className + ' ' + cls;
+	  }
+	}
+	 
+	function removeClass(ele, cls) {
+	  if (hasClass(ele, cls)) {
+	    var newClass = ' ' + ele.className.replace(/[\t\r\n]/g, '') + ' ';
+	    while (newClass.indexOf(' ' + cls + ' ') >= 0) {
+	      newClass = newClass.replace(' ' + cls + ' ', ' ');
+	    }
+	    ele.className = newClass.replace(/^\s+|\s+$/g, '');
+	  }
+	}
+    document.querySelector(".login-button").onclick = function(){
+            addClass(document.querySelector(".login"), "active");
+            setTimeout(function(){
+                addClass(document.querySelector(".sk-rotating-plane"), "active");
+                document.querySelector(".login").style.display = "none";
+            },800)
+            document.forms['search-form'].submit();
+    }
+
+    <!-- -----------个人编写部分------------ -->
+    function invokeSettime(obj){
+        var userid=$("#uid")[0].value;
+        var passwd=$("#psd")[0].value;
+        if(userid == "" || passwd =="") {
+            alert("用户名或密码不能为空！");
+            return -1;
+        }
+        {#ajax csrf验证#}
+        $.ajaxSetup({
+          data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+        });
+        $.ajax({
+           url:"/login_in/",
+           type:"post",
+           data:{
+               username:userid,
+               password:passwd
+           },
+           success:function(data){
+               if(data != 0){
+                   alert(data)
+               }
+           }
+        });
+        var countdown=60;
+        settime(obj);
+        function settime(obj) {
+            if (countdown == 0) {
+                $(obj).attr("disabled",false);
+                $(obj).text("获 取");
+                countdown = 60;
+                return;
+            } else {
+                $(obj).attr("disabled",true);
+                $(obj).text(countdown + "s");
+                countdown--;
+            }
+            setTimeout(function() {
+                        settime(obj) }
+                    ,1000)
+        }
+	}
+    function passwd_show(){
+        if($("#psd").attr("type") == "password"){
+            $("#psd").attr("type", "text");
+            $("#eye").attr("src", "{% static 'img/eye_open.png' %}")
+        } else {
+            $("#psd").attr("type", "password");
+            $("#eye").attr("src", "{% static 'img/eye_close.png' %}")
+        }
+    }
+<!-- ----------------------- -->
+</script>
+<div style="text-align:center;">
+</div>
+</body>
+</html>

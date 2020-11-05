@@ -1,0 +1,15 @@
+FROM python:3.9
+MAINTAINER  redapricot
+
+WORKDIR /usr/src/app
+COPY requirements.txt ./
+
+# 使用了清华源
+RUN pip install -i https://mirrors.aliyun.com/pypi/simple/  -r requirements.txt
+
+COPY . ./
+
+# 打开容器端口
+EXPOSE 8000
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

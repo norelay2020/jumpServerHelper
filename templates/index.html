@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html class=" ">
+<head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>JumpServer辅助终端</title>
+</head>
+<body>
+
+    <form id="select_form" action="/index/" method="post">
+        {% csrf_token %}
+        <div>
+            <span class="select_text_ui" style="min-width: 6em;">请选择环境与业务分类:</span><b class="select_arrow"></b>
+        </div>
+        <div style="float: left;">
+        <select id="env" name="env_name">
+            <option value="production">生产环境</option>
+            <option value="test" selected="selected">测试环境</option>
+        </select>
+        </div>
+        <div style="float:left;">
+{#        <select id="test" name="test_name">#}
+{#            <option value="all" selected="selected">全 部</option>#}
+{#            {% for var in test %}#}
+{#                <option value="{{ var }}">{{ var }}</option>#}
+{#            {% endfor %}#}
+{#        </select>#}
+            <table id="test">
+                <tr><td><input id="sel_test" onchange="selectAll1()" type="checkbox" value="1" />全选/全不选</td></tr>
+                {% for var in test %}
+                <tr><td><input type="checkbox" onchange="change_test()" name="test_name" value="{{ var }}">&nbsp;{{ var }}</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div style="float:left;">
+{#        <select id="production" name="pro_name" style="display: none;">#}
+{#            <option value="all" selected="selected">全 部</option>#}
+{#            {% for var in production %}#}
+{#                <option value="{{ var }}">{{ var }}</option>#}
+{#            {% endfor %}#}
+{#        </select>#}
+            <table id="production" style="display: none;">
+                <tr><td><input id="sel_pro" onchange="selectAll2()" type="checkbox" value="1" />全选/全不选</td></tr>
+                {% for var in production %}
+                <tr><td><input type="checkbox" onchange="change_production()" name="pro_name" value="{{ var }}">&nbsp;{{ var }}</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div>
+            <input id="one" calass="ipbtn" type="button" onclick="select_submit(this)" data_name="add" value="增量更新">
+            <input id="two" calass="ipbtn" type="button" onclick="select_submit(this)" data_name="all" value="全量更新">
+{#            <button onclick="select_submit(this)" data_name="add">增量更新</button>#}
+{#            <button onclick="select_submit(this)" data_name="all">全量更新</button>#}
+        </div>
+    </form>
+
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script type="text/javascript">
+        $("#env").change(function(){
+            if($(this).val() == "production"){
+                select_t = document.getElementById("test");
+                select_t.style.display = "none";
+                select_p = document.getElementById("production");
+                select_p.style.display = "inline";
+            }
+            if($(this).val() == "test"){
+                select_t = document.getElementById("test");
+                select_t.style.display = "inline";
+                select_p = document.getElementById("production");
+                select_p.style.display = "none";
+            }
+        });
+        function select_submit(obj){
+            data_name=$(obj).attr("data_name")
+            id=$(obj).attr("id")
+            if(id == "one"){
+                $("#two").css("display", 'none')
+            }else{
+                $("#one").css("display", 'none')
+            }
+            {#ajax csrf验证#}
+            $.ajaxSetup({
+              data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+            });
+            $.ajax({
+               url:"/index/data-update-way/",
+               type:"post",
+               data:{
+                   update_way:data_name
+               },
+               success:function(data){
+                   if(data == 0){
+                       var flag=confirm("请确认是否提交？")
+                       if(flag == true){
+                           var oldvalue=$(obj).val()
+                           $(obj).val("正在提交")
+                           $(obj).attr("disabled", "disabled")
+                           $(obj).removeClass("ipbtn")
+                           $(obj).addClass("btn_add")
+                           document.forms['select_form'].submit();
+                           {#如果submit不刷新页面，此处可以对上面的修改进行还原#}
+                       }
+                   }
+               }
+            });
+        };
+        function change_production(){
+            $("#sel_test").removeAttr('checked')
+            $("input[name='test_name']").removeAttr('checked');
+        }
+        function change_test(){
+            $("#sel_pro").removeAttr('checked')
+            $("input[name='pro_name']").removeAttr('checked');
+        }
+        function selectAll1(){
+            var isCheck=$("#sel_test").is(':checked');  //获得全选复选框是否选中
+            $("input[name='test_name']").each(function() {
+                this.checked = isCheck;       //循环赋值给每个复选框是否选中
+                change_test()
+            });
+        }
+        function selectAll2(){
+            var isCheck=$("#sel_pro").is(':checked');  //获得全选复选框是否选中
+            $("input[name='pro_name']").each(function() {
+                this.checked = isCheck;       //循环赋值给每个复选框是否选中
+                change_production()
+            });
+        }
+    </script>
+</body>
+</html>
